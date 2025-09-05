@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tasks</title>
+</head>
+<body>
+<h2>Tasks</h2>
+
+<!-- Navigation Links -->
+<p>
+    <a href="login.html">Login</a> |
+    <a href="register.html">Register</a>
+</p>
+
+<!-- Section to display tasks -->
+<div id="taskList"></div>
+
+<h3>Create New Task</h3>
+<form id="createTaskForm">
+    <input type="text" id="title" placeholder="Task Title" required>
+    <input type="text" id="description" placeholder="Description">
+    <input type="date" id="targetDate">
+    <button type="submit">Create Task</button>
+</form>
+
+<p id="result"></p>
+
+<script>
+    const userId = 1; // Hardcoded for demo, replace dynamically later
+
+    async function loadTasks() {
+        const response = await fetch(`http://localhost:8000/api/tasks/assigned/${userId}`);
+        const tasks = await response.json();
+
+        const taskDiv = document.getElementById("taskList");
+        taskDiv.innerHTML = "";
+
+        if (tasks.length === 0) {
+            taskDiv.innerText = "No tasks assigned.";
+            return;
+        }
+
+        tasks.forEach(task => {
+            const taskItem = document.createElement("div");
+            taskItem.innerHTML = `<strong>${task.title}</strong> - ${task.description || "No description"}
+                                  <br>Status: ${task.status} | Target: ${task.targetDate || "N/A"}
+                                  <br><button onclick="viewComments(${task.taskId})">View Comments</button>
+                                  <hr>`;
+            taskDiv.appendChild(taskItem);
+        });
+    }
+
+    window.onload = loadTasks;
+
+    document.getElementById("createTaskForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const title = document.getElementById("title").value;
+        const description = document.getElementById("description").value;
+        const targetDate = document.getElementById("targetDate").value;
+
+        const response = await fetch("http://localhost:8000/api/tasks/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                targetDate: targetDate,
+                requesterId: userId,
+                assigneeId: userId,
+                status: "Open"
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById("result").innerText = "Task created successfully!";
+            document.getElementById("createTaskForm").reset();
+            loadTasks();
+        } else {
+            document.getElementById("result").innerText = "Failed to create task.";
+        }
+    });
+
+    function viewComments(taskId) {
+        // Open comments page for this task
+        window.location.href = `comments.html?taskId=${taskId}`;
+    }
+</script>
+</body>
+</html>

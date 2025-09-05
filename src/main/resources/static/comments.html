@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Comments</title>
+</head>
+<body>
+<h2>Task Comments</h2>
+
+<!-- Navigation Links -->
+<p>
+  <a href="login.html">Login</a> |
+  <a href="register.html">Register</a> |
+  <a href="tasks.html">Tasks</a>
+</p>
+
+<!-- Section to display comments -->
+<div id="commentList"></div>
+
+<h3>Add a Comment</h3>
+<form id="addCommentForm">
+  <textarea id="commentText" placeholder="Enter your comment" required></textarea><br>
+  <button type="submit">Add Comment</button>
+</form>
+
+<p id="result"></p>
+
+<script>
+  const userId = 1; // Replace dynamically later
+
+  // Get taskId from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const taskId = urlParams.get('taskId');
+
+  async function loadComments() {
+      const response = await fetch(`http://localhost:8000/api/comments/task/${taskId}`);
+      const comments = await response.json();
+
+      const commentDiv = document.getElementById("commentList");
+      commentDiv.innerHTML = "";
+
+      if (comments.length === 0) {
+          commentDiv.innerText = "No comments for this task yet.";
+          return;
+      }
+
+      comments.forEach(c => {
+          const commentItem = document.createElement("div");
+          commentItem.innerHTML = `<strong>User ${c.commenter.id}:</strong> ${c.commentText}
+                                   <br><em>Created: ${new Date(c.createdDate).toLocaleString()}</em><hr>`;
+          commentDiv.appendChild(commentItem);
+      });
+  }
+
+  window.onload = loadComments;
+
+  document.getElementById("addCommentForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const commentText = document.getElementById("commentText").value;
+
+      const response = await fetch("http://localhost:8000/api/comments/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+              taskId: taskId,
+              commenterId: userId,
+              commentText: commentText
+          })
+      });
+
+      if (response.ok) {
+          document.getElementById("result").innerText = "Comment added successfully!";
+          document.getElementById("addCommentForm").reset();
+          loadComments();
+      } else {
+          document.getElementById("result").innerText = "Failed to add comment.";
+      }
+  });
+</script>
+</body>
+</html>
