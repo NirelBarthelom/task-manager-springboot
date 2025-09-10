@@ -36,7 +36,7 @@ public class UserService {
     }
 
     // Validates login by checking if username and password match a database record
-    public boolean validateLogin(String usernameOrEmail, String password) {
+    public User validateLogin(String usernameOrEmail, String password) {
         User user;
 
         // Check if input contains '@' → treat as email
@@ -47,8 +47,15 @@ public class UserService {
         }
 
         if (user == null) {
-            return false;
+            return null; // No user found
         }
-        return user.getPassword().equals(password);
+
+        // Check password
+        if (user.getPassword().equals(password)) {
+            return user; // Return the actual User object
+        } else {
+            return null; // Wrong password
+        }
     }
+
 }

@@ -2,81 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Task Comments</title>
+  <title>TaskManager Comments</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h2 { text-align: center; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+    input, button { padding: 8px; margin-top: 10px; }
+    .links a {
+        display: inline-block;
+        margin: 5px 10px 20px 0;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .links a:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-<h2>Task Comments</h2>
+
+<h2>Comments</h2>
 
 <!-- Navigation Links -->
-<p>
-  <a href="login.html">Login</a> |
-  <a href="register.html">Register</a> |
-  <a href="tasks.html">Tasks</a>
-</p>
+<div class="links">
+  <a href="login.html">Login Page</a>
+  <a href="register.html">Register Page</a>
+  <a href="tasks.html">Tasks Page</a>
+</div>
 
-<!-- Section to display comments -->
-<div id="commentList"></div>
+<ul id="commentsList"></ul>
 
-<h3>Add a Comment</h3>
-<form id="addCommentForm">
-  <textarea id="commentText" placeholder="Enter your comment" required></textarea><br>
-  <button type="submit">Add Comment</button>
-</form>
-
-<p id="result"></p>
+<input type="text" id="commentInput" placeholder="Write a comment..." />
+<button id="addCommentBtn">Add Comment</button>
 
 <script>
-  const userId = 1; // Replace dynamically later
+  const commentsList = document.getElementById("commentsList");
+  const commentInput = document.getElementById("commentInput");
+  const addCommentBtn = document.getElementById("addCommentBtn");
 
-  // Get taskId from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const taskId = urlParams.get('taskId');
+  const taskId = 1;      // Example task ID
+  const commenterId = 1; // Example user ID
 
   async function loadComments() {
-      const response = await fetch(`http://localhost:8000/api/comments/task/${taskId}`);
-      const comments = await response.json();
-
-      const commentDiv = document.getElementById("commentList");
-      commentDiv.innerHTML = "";
-
-      if (comments.length === 0) {
-          commentDiv.innerText = "No comments for this task yet.";
-          return;
+      try {
+          const response = await fetch(`http://localhost:8000/api/comments/task/${taskId}`);
+          const comments = await response.json();
+          commentsList.innerHTML = "";
+          comments.forEach(c => {
+              const li = document.createElement("li");
+              li.textContent = `${c.commenter.username}: ${c.commentText}`;
+              commentsList.appendChild(li);
+          });
+      } catch (error) {
+          console.error("Error loading comments", error);
       }
-
-      comments.forEach(c => {
-          const commentItem = document.createElement("div");
-          commentItem.innerHTML = `<strong>User ${c.commenter.id}:</strong> ${c.commentText}
-                                   <br><em>Created: ${new Date(c.createdDate).toLocaleString()}</em><hr>`;
-          commentDiv.appendChild(commentItem);
-      });
   }
 
-  window.onload = loadComments;
+  addCommentBtn.addEventListener("click", async () => {
+      const commentText = commentInput.value;
+      if (!commentText) return;
 
-  document.getElementById("addCommentForm").addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      const commentText = document.getElementById("commentText").value;
-
-      const response = await fetch("http://localhost:8000/api/comments/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-              taskId: taskId,
-              commenterId: userId,
-              commentText: commentText
-          })
-      });
-
-      if (response.ok) {
-          document.getElementById("result").innerText = "Comment added successfully!";
-          document.getElementById("addCommentForm").reset();
+      try {
+          await fetch(`http://localhost:8000/api/comments/create?taskId=${taskId}&commenterId=${commenterId}&commentText=${encodeURIComponent(commentText)}`, {
+              method: "POST"
+          });
+          commentInput.value = "";
           loadComments();
-      } else {
-          document.getElementById("result").innerText = "Failed to add comment.";
+      } catch (error) {
+          console.error("Error adding comment", error);
       }
   });
+
+  loadComments();
 </script>
+
 </body>
 </html>

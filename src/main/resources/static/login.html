@@ -2,43 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>TaskManager Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            width: 300px;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 25px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .links {
+            margin-top: 20px;
+        }
+        .links a {
+            display: block;
+            margin: 5px 0;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-<h2>Login</h2>
-<form id="loginForm">
-    <input type="text" id="usernameOrEmail" placeholder="Username or Email!" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-</form>
 
-<p id="result"></p>
+<div class="login-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <input type="text" id="usernameOrEmail" placeholder="Username or Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+    <div class="message" id="message"></div>
 
-<!-- Navigation Links -->
-<p>
-    <a href="register.html">Register</a> |
-    <a href="tasks.html">Tasks</a>
-</p>
+    <!-- Links to other pages for testing -->
+    <div class="links">
+        <strong>Navigation for Testing:</strong>
+        <a href="register.html">Go to Register Page</a>
+        <a href="tasks.html">Go to Tasks Page</a>
+        <a href="comments.html">Go to Comment Page</a>
+    </div>
+</div>
 
 <script>
-    document.getElementById("loginForm").addEventListener("submit", async function(event) {
-        event.preventDefault();
+    const loginForm = document.getElementById("loginForm");
+    const messageDiv = document.getElementById("message");
+
+    loginForm.addEventListener("submit", async function(event) {
+        event.preventDefault(); // prevent default form submission
 
         const usernameOrEmail = document.getElementById("usernameOrEmail").value;
         const password = document.getElementById("password").value;
 
-        const response = await fetch("http://localhost:8000/api/users/loginForm", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usernameOrEmail: usernameOrEmail, password: password })
-        });
+        try {
+            const response = await fetch("http://localhost:8000/api/users/loginForm", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ usernameOrEmail, password })
+            });
 
-        if (response.ok) {
-            document.getElementById("result").innerText = "Login successful!";
-        } else {
-            document.getElementById("result").innerText = "Invalid credentials";
+            if (response.ok) {
+                const result = await response.json();
+                // Save login info in localStorage
+                localStorage.setItem("username", result.username);
+                localStorage.setItem("role", result.role);
+
+                // Redirect to tasks.html
+                window.location.href = "tasks.html";
+            } else if (response.status === 401) {
+                messageDiv.style.color = "red";
+                messageDiv.textContent = "Invalid credentials.";
+            } else {
+                messageDiv.style.color = "red";
+                messageDiv.textContent = "Login failed. Please try again.";
+            }
+        } catch (error) {
+            messageDiv.style.color = "red";
+            messageDiv.textContent = "Error connecting to server.";
+            console.error(error);
         }
     });
 </script>
+
 </body>
 </html>
